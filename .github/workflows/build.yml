@@ -33,7 +33,22 @@ jobs:
           pip install buildozer "cython<3" virtualenv
 
       - name: Build APK
-        run: buildozer -v android debug
+        shell: bash
+        run: buildozer -v android debug 2>&1 | tee build.log
+
+      - name: Show the error (only runs if the build failed)
+        if: failure()
+        shell: bash
+        run: |
+          echo "=========== ERROR CONTEXT ==========="
+          sed -n '1,/# Command failed/p' build.log | sed 's/\x1b\[[0-9;]*m//g' | tail -80
+
+      - name: Save full log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
